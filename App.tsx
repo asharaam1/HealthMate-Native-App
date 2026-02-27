@@ -1,45 +1,33 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState } from 'react';
+import OnboardingScreen from "./src/screens/OnboardingScreens";
+import { View, Text, StyleSheet } from 'react-native';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+const App = () => {
+  const [showOnboarding, setShowOnboarding] = useState(true);
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  if (showOnboarding) {
+    return <OnboardingScreen onFinish={() => setShowOnboarding(false)} />;
+  }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
-  );
-}
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
+    <View style={styles.mainApp}>
+      <Text style={styles.text}>Welcome to HealthMate Main App!</Text>
+      <Text>Login/Signup Screen coming soon...</Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
+  mainApp: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
+  text: {
+    fontSize: 20,
+    fontWeight: 'bold'
+
+  }
 });
 
 export default App;
