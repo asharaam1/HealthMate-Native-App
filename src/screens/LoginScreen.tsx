@@ -1,9 +1,17 @@
 import * as React from 'react';
 import { useState } from 'react';
 import {
-  StyleSheet, View, Text, TextInput, TouchableOpacity,
-  SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/Colors';
 
 const LoginScreen = ({ navigation, setIsLoggedIn }: any) => {
@@ -26,7 +34,6 @@ const LoginScreen = ({ navigation, setIsLoggedIn }: any) => {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-
           {/* Back Button */}
           <TouchableOpacity
             style={styles.backButton}
@@ -38,7 +45,9 @@ const LoginScreen = ({ navigation, setIsLoggedIn }: any) => {
           {/* Header Section */}
           <View style={styles.header}>
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Log in to continue your health journey.</Text>
+            <Text style={styles.subtitle}>
+              Log in to continue your health journey.
+            </Text>
           </View>
 
           {/* Form Section */}
@@ -68,10 +77,7 @@ const LoginScreen = ({ navigation, setIsLoggedIn }: any) => {
               />
             </View>
 
-            <TouchableOpacity
-              style={styles.loginBtn}
-              onPress={handleLogin}
-            >
+            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
               <Text style={styles.loginBtnText}>Login</Text>
             </TouchableOpacity>
 
@@ -91,11 +97,11 @@ const LoginScreen = ({ navigation, setIsLoggedIn }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white
+    backgroundColor: COLORS.white,
   },
   scrollContent: {
     padding: 24,
-    flexGrow: 1
+    flexGrow: 1,
   },
   backButton: {
     marginTop: 8,
@@ -107,32 +113,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   header: {
-    marginBottom: 40
+    marginBottom: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
     color: COLORS.textMain,
-    letterSpacing: -0.5
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
     color: COLORS.textSub,
     marginTop: 8,
-    lineHeight: 22
+    lineHeight: 22,
   },
   form: {
-    width: '100%'
+    width: '100%',
   },
   inputContainer: {
-    marginBottom: 20
+    marginBottom: 20,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.textMain,
     marginBottom: 8,
-    marginLeft: 4
+    marginLeft: 4,
   },
   input: {
     backgroundColor: COLORS.inputBg,
@@ -142,7 +148,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textMain,
     borderWidth: 1,
-    borderColor: '#E9ECEF'
+    borderColor: '#E9ECEF',
   },
   loginBtn: {
     backgroundColor: COLORS.primary,
@@ -154,22 +160,22 @@ const styles = StyleSheet.create({
   loginBtnText: {
     color: COLORS.white,
     fontSize: 18,
-    fontWeight: '700'
+    fontWeight: '700',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 32
+    marginTop: 32,
   },
   footerText: {
     color: COLORS.textSub,
-    fontSize: 14
+    fontSize: 14,
   },
   linkText: {
     color: COLORS.primary,
     fontWeight: '700',
-    fontSize: 14
-  }
+    fontSize: 14,
+  },
 });
 
 export default LoginScreen;
