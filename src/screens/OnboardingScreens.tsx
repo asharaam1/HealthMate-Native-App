@@ -1,15 +1,18 @@
-import React, { useState, useRef } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import * as React from 'react';
+import { useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   Dimensions,
   FlatList,
   Animated,
   StatusBar,
 } from 'react-native';
+import { AuthStackParamList } from '../navigation/types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const { width, height } = Dimensions.get('window');
 
@@ -51,10 +54,11 @@ const DATA = [
   },
 ];
 
-const OnboardingScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
+const OnboardingScreen = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const slidesRef = useRef<FlatList>(null);
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
   const viewableItemsChanged = useRef(({ viewableItems }: any) => {
     setCurrentIndex(viewableItems[0].index);
@@ -64,7 +68,7 @@ const OnboardingScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
     if (currentIndex < DATA.length - 1) {
       slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      onFinish();
+      navigation.replace('Login');
     }
   };
 

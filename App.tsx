@@ -1,33 +1,47 @@
-import React, { useState } from 'react';
-import OnboardingScreen from "./src/screens/OnboardingScreens";
-import { View, Text, StyleSheet } from 'react-native';
+import * as React from 'react';
+import { useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-const App = () => {
-  const [showOnboarding, setShowOnboarding] = useState(true);
+// Import screens
+import OnboardingScreen from './src/screens/OnboardingScreens';
+import LoginScreen from './src/screens/LoginScreen';
+import SignupScreen from './src/screens/SignupScreen';
+import HomeScreen from './src/screens/HomeScreen';
 
-  if (showOnboarding) {
-    return <OnboardingScreen onFinish={() => setShowOnboarding(false)} />;
-  }
-
-  return (
-    <View style={styles.mainApp}>
-      <Text style={styles.text}>Welcome to HealthMate Main App!</Text>
-      <Text>Login/Signup Screen coming soon...</Text>
-    </View>
-  );
+export type RootStackParamList = {
+  Onboarding: undefined;
+  Login: undefined;
+  Signup: undefined;
+  Home: undefined;
 };
 
-const styles = StyleSheet.create({
-  mainApp: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  text: {
-    fontSize: 20,
-    fontWeight: 'bold'
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
-  }
-});
+const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!isLoggedIn ? (
+          <>
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="Login">
+              {(props) => <LoginScreen {...props} setIsLoggedIn={setIsLoggedIn} />}
+            </Stack.Screen>
+            <Stack.Screen name="Signup">
+              {(props) => <SignupScreen {...props} setIsLoggedIn={setIsLoggedIn} />}
+            </Stack.Screen>
+          </>
+        ) : (
+          <Stack.Screen name="Home">
+            {(props) => <HomeScreen {...props} setIsLoggedIn={setIsLoggedIn} />}
+          </Stack.Screen>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
 
 export default App;
