@@ -1,33 +1,30 @@
-import React, { useState } from 'react';
-import OnboardingScreen from "./src/screens/OnboardingScreens";
-import { View, Text, StyleSheet } from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import AppNavigator from './src/navigation/AppNavigator';
+import AuthStack from './src/navigation/AuthStack';
 
-const App = () => {
-  const [showOnboarding, setShowOnboarding] = useState(true);
+const AppContent = () => {
+  const { user, isLoading } = useAuth();
 
-  if (showOnboarding) {
-    return <OnboardingScreen onFinish={() => setShowOnboarding(false)} />;
+  if (isLoading) {
+    // You can add a splash screen here
+    return null;
   }
 
   return (
-    <View style={styles.mainApp}>
-      <Text style={styles.text}>Welcome to HealthMate Main App!</Text>
-      <Text>Login/Signup Screen coming soon...</Text>
-    </View>
+    <NavigationContainer>
+      {user ? <AppNavigator /> : <AuthStack/>}
+    </NavigationContainer>
   );
 };
 
-const styles = StyleSheet.create({
-  mainApp: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  text: {
-    fontSize: 20,
-    fontWeight: 'bold'
-
-  }
-});
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
 
 export default App;
