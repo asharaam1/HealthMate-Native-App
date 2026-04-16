@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../api/api'; // tumhara axios instance
 
 interface User {
   id: string;
@@ -17,7 +18,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,16 +45,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      // TODO: Replace with actual API call to MongoDB backend
-      // This is mock implementation
-      const mockUser = {
-        id: '1',
-        name: 'John Doe',
-        email: email,
-      };
-      
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
-      setUser(mockUser);
+      const res = await api.post('/auth/login', { email, password });
+      const { user, token } = res.data;
+
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      await AsyncStorage.setItem('token', token);
+
+      setUser(user);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -63,16 +63,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (name: string, email: string, password: string) => {
     try {
       setIsLoading(true);
-      // TODO: Replace with actual API call to MongoDB backend
-      // This is mock implementation
-      const mockUser = {
-        id: Date.now().toString(),
-        name: name,
-        email: email,
-      };
-      
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
-      setUser(mockUser);
+      const res = await api.post('/auth/signup', { name, email, password });
+      const { user, token } = res.data;
+
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      await AsyncStorage.setItem('token', token);
+
+      setUser(user);
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -84,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('token');
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);

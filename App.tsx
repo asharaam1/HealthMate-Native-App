@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthStack from './src/navigation/AuthStack';
+import { navigationRef } from './src/navigation/RootNavigation';
 
 const AppContent = () => {
   const { user, isLoading } = useAuth();
@@ -13,7 +14,7 @@ const AppContent = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       {user ? <AppNavigator /> : <AuthStack/>}
     </NavigationContainer>
   );
