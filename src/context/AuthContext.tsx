@@ -1,12 +1,7 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../api/api'; // tumhara axios instance
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+import api from '../api/api';
+import type { User } from '../types'; // ✅ shared type use karo
 
 interface AuthContextType {
   user: User | null;
@@ -25,54 +20,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user session
-    loadStoredUser();
+    restoreSession();
   }, []);
 
-  const loadStoredUser = async () => {
+  // App open hone par stored session check karo
+  const restoreSession = async () => {
     try {
-      const storedUser = await AsyncStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+      const stored = await AsyncStorage.getItem('user');
+      if (stored) {
+        setUser(JSON.parse(stored));
       }
-    } catch (error) {
-      console.error('Error loading user:', error);
+    } catch (e) {
+      console.error('Session restore error:', e);
     } finally {
       setIsLoading(false);
     }
   };
 
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const res = await api.post('/auth/login', { email, password });
       const { user, token } = res.data;
-
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-      await AsyncStorage.setItem('token', token);
-
+      await AsyncStorage.multiSet([
+        ['user', JSON.stringify(user)],
+        ['token', token],
+      ]);
       setUser(user);
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+    } catch (e) {
+      console.error('Login error:', e);
+      throw e; // Screen pe error dikhane ke liye rethrow
     } finally {
       setIsLoading(false);
     }
   };
 
   const signup = async (name: string, email: string, password: string) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const res = await api.post('/auth/signup', { name, email, password });
       const { user, token } = res.data;
-
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-      await AsyncStorage.setItem('token', token);
-
+      await AsyncStorage.multiSet([
+        ['user', JSON.stringify(user)],
+        ['token', token],
+      ]);
       setUser(user);
-    } catch (error) {
-      console.error('Signup error:', error);
-      throw error;
+    } catch (e) {
+      console.error('Signup error:', e);
+      throw e;
     } finally {
       setIsLoading(false);
     }
@@ -80,11 +75,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('token');
+      await AsyncStorage.multiRemove(['user', 'token']);
       setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch (e) {
+      console.error('Logout error:', e);
     }
   };
 
@@ -95,10 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+export const useAuth = (): AuthContextType => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 };

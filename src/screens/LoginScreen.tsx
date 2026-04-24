@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { 
-  StyleSheet, View, Text, TextInput, TouchableOpacity, 
-  SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator 
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../constants/Colors';
 import { useAuth } from '../context/AuthContext';
 
@@ -31,14 +40,13 @@ const LoginScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          
           {/* Back Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
@@ -48,14 +56,16 @@ const LoginScreen = ({ navigation }: any) => {
           {/* Header Section */}
           <View style={styles.header}>
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Log in to continue your health journey with AI.</Text>
+            <Text style={styles.subtitle}>
+              Log in to continue your health journey with AI.
+            </Text>
           </View>
 
           {/* Form Section */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email Address</Text>
-              <TextInput 
+              <TextInput
                 style={styles.input}
                 placeholder="example@mail.com"
                 placeholderTextColor={COLORS.textSub}
@@ -69,7 +79,7 @@ const LoginScreen = ({ navigation }: any) => {
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
-              <TextInput 
+              <TextInput
                 style={styles.input}
                 placeholder="••••••••"
                 placeholderTextColor={COLORS.textSub}
@@ -83,7 +93,7 @@ const LoginScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.loginBtn, loading && styles.disabledBtn]}
               onPress={handleLogin}
               disabled={loading}
@@ -97,7 +107,10 @@ const LoginScreen = ({ navigation }: any) => {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>New to HealthMate? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Signup')} disabled={loading}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Signup')}
+                disabled={loading}
+              >
                 <Text style={styles.linkText}>Create Account</Text>
               </TouchableOpacity>
             </View>
@@ -109,8 +122,14 @@ const LoginScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.white },
-  scrollContent: { padding: 24, flexGrow: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  scrollContent: {
+    padding: 24,
+    flexGrow: 1,
+  },
   backButton: {
     marginTop: 8,
     marginBottom: 16,
@@ -120,12 +139,34 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '600',
   },
-  header: { marginBottom: 40 },
-  title: { fontSize: 32, fontWeight: '800', color: COLORS.textMain, letterSpacing: -0.5 },
-  subtitle: { fontSize: 16, color: COLORS.textSub, marginTop: 8, lineHeight: 22 },
-  form: { width: '100%' },
-  inputContainer: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: COLORS.textMain, marginBottom: 8, marginLeft: 4 },
+  header: {
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.textMain,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.textSub,
+    marginTop: 8,
+    lineHeight: 22,
+  },
+  form: {
+    width: '100%',
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textMain,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
   input: {
     backgroundColor: COLORS.inputBg,
     paddingHorizontal: 16,
@@ -134,10 +175,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textMain,
     borderWidth: 1,
-    borderColor: '#E9ECEF'
+    borderColor: '#E9ECEF',
   },
-  forgotBtn: { alignSelf: 'flex-end', marginTop: 8 },
-  forgotText: { color: COLORS.primary, fontWeight: '600', fontSize: 13 },
+  forgotBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+  },
+  forgotText: {
+    color: COLORS.primary,
+    fontWeight: '600',
+    fontSize: 13,
+  },
   loginBtn: {
     backgroundColor: COLORS.primary,
     paddingVertical: 16,
@@ -148,15 +196,30 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 5
+    elevation: 5,
   },
   disabledBtn: {
     opacity: 0.6,
   },
-  loginBtnText: { color: COLORS.white, fontSize: 18, fontWeight: '700' },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
-  footerText: { color: COLORS.textSub, fontSize: 14 },
-  linkText: { color: COLORS.primary, fontWeight: '700', fontSize: 14 }
+  loginBtnText: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 32,
+  },
+  footerText: {
+    color: COLORS.textSub,
+    fontSize: 14,
+  },
+  linkText: {
+    color: COLORS.primary,
+    fontWeight: '700',
+    fontSize: 14,
+  },
 });
 
 export default LoginScreen;

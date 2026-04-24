@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { AuthStackParamList } from '../navigation/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,9 +30,10 @@ const COLORS = {
 const DATA = [
   {
     id: '1',
-    title: 'Unlock Your\nHealth\'s Future',
+    title: "Unlock Your\nHealth's Future",
     subtitle: 'AI-Powered Insights',
-    description: 'Meet HealthMate, your health companion integrated with Gemini AI for intelligent report analysis.',
+    description:
+      'Meet HealthMate, your health companion integrated with Gemini AI for intelligent report analysis.',
     icon: '🧠',
     bg: COLORS.primary,
   },
@@ -39,7 +41,8 @@ const DATA = [
     id: '2',
     title: 'Smart Report\nAnalysis',
     subtitle: 'Upload & Track',
-    description: 'Instantly upload your medical reports. AI trends your data and helps you stay proactive about your health.',
+    description:
+      'Instantly upload your medical reports. AI trends your data and helps you stay proactive about your health.',
     icon: '📋',
     bg: COLORS.secondary,
   },
@@ -47,7 +50,8 @@ const DATA = [
     id: '3',
     title: 'Terms & Privacy\nFirst',
     subtitle: 'Secure & Encrypted',
-    description: 'Your data is encrypted. AI analysis is for informational purposes. Consult a doctor for medical advice.',
+    description:
+      'Your data is encrypted. AI analysis is for informational purposes. Consult a doctor for medical advice.',
     icon: '🛡️',
     bg: COLORS.accent,
   },
@@ -57,16 +61,23 @@ const OnboardingScreen = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const slidesRef = useRef<FlatList>(null);
-  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
   const viewableItemsChanged = useRef(({ viewableItems }: any) => {
     setCurrentIndex(viewableItems[0].index);
   }).current;
 
-  const scrollToNext = () => {
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
+
+  const scrollToNext = async () => {
     if (currentIndex < DATA.length - 1) {
       slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
+      // ✅ Mark karo ke onboarding dekh li
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
       navigation.replace('Login');
     }
   };
@@ -90,10 +101,10 @@ const OnboardingScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-
       {/* Background Decor */}
-      <View style={[styles.bgCircle, { backgroundColor: DATA[currentIndex].bg }]} />
-
+      <View
+        style={[styles.bgCircle, { backgroundColor: DATA[currentIndex].bg }]}
+      />
       <FlatList
         data={DATA}
         renderItem={renderItem}
@@ -101,16 +112,27 @@ const OnboardingScreen = () => {
         showsHorizontalScrollIndicator={false}
         pagingEnabled
         bounces={false}
-        keyExtractor={(item) => item.id}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
-          useNativeDriver: false,
-        })}
+        keyExtractor={item => item.id}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          {
+            useNativeDriver: false,
+          },
+        )}
         onViewableItemsChanged={viewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         ref={slidesRef}
       />
-
       <View style={styles.footer}>
-        {/* Pagination Dots */}
+        {/* Skip — last slide pe hide ho jaye */}
+        {currentIndex < DATA.length - 1 ? (
+          <TouchableOpacity onPress={() => navigation.replace('Login')}>
+            <Text style={styles.skipText}>Skip</Text>
+          </TouchableOpacity>
+        ) : (
+          <View /> // spacer — dots centered rahe
+        )}
+
         <View style={styles.pagination}>
           {DATA.map((_, i) => {
             const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
@@ -119,17 +141,21 @@ const OnboardingScreen = () => {
               outputRange: [10, 25, 10],
               extrapolate: 'clamp',
             });
-            return <Animated.View style={[styles.dot, { width: dotWidth }]} key={i} />;
-          })}
+            return (
+              <Animated.View
+                style={[styles.dot, { width: dotWidth }]}
+                key={i}
+              />
+            );
+          })}{' '}
         </View>
 
-        {/* Action Button */}
-        <TouchableOpacity style={styles.nextBtn} onPress={scrollToNext} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.nextBtn} onPress={scrollToNext}>
           <Text style={styles.nextBtnText}>
-            {currentIndex === DATA.length - 1 ? 'Get Started' : 'Next Step'}
+            {currentIndex === DATA.length - 1 ? 'Get Started' : 'Next'}
           </Text>
         </TouchableOpacity>
-      </View>
+      </View>{' '}
     </View>
   );
 };
@@ -137,7 +163,7 @@ const OnboardingScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white
+    backgroundColor: COLORS.white,
   },
   bgCircle: {
     position: 'absolute',
@@ -150,7 +176,7 @@ const styles = StyleSheet.create({
   },
   slide: {
     width,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   topSection: {
     height: height * 0.5,
@@ -171,7 +197,7 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
   },
   emoji: {
-    fontSize: 80
+    fontSize: 80,
   },
   bottomCard: {
     flex: 1,
@@ -207,8 +233,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingBottom: 50,
   },
+  skipText: {
+    fontSize: 15,
+    color: COLORS.textSub,
+    fontWeight: '500',
+  },
   pagination: {
-    flexDirection: 'row'
+    flexDirection: 'row',
   },
   dot: {
     height: 10,
@@ -225,7 +256,8 @@ const styles = StyleSheet.create({
   },
   nextBtnText: {
     color: COLORS.white,
-    fontSize: 16, fontWeight: 'bold'
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -4,27 +4,39 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthStack from './src/navigation/AuthStack';
 import { navigationRef } from './src/navigation/RootNavigation';
+import { SafeAreaProvider } from 'react-native-safe-area-context'; // ← yeh
+import { StatusBar } from 'react-native';
+import { useTheme } from './src/theme/theme';
 
 const AppContent = () => {
   const { user, isLoading } = useAuth();
-
+  const { colors } = useTheme();
   if (isLoading) {
     // You can add a splash screen here
     return null;
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
-      {user ? <AppNavigator /> : <AuthStack/>}
-    </NavigationContainer>
+    <>
+      <StatusBar
+        backgroundColor={colors.primary}
+        barStyle={colors.statusBar}
+        translucent={false}
+      />
+      <NavigationContainer ref={navigationRef}>
+        {user ? <AppNavigator /> : <AuthStack />}
+      </NavigationContainer>
+    </>
   );
 };
 
 const App = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 };
 

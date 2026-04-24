@@ -1,40 +1,29 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from '../screens/HomeScreen';
-import { AppStackParamList } from './types';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { useAuth } from '../context/AuthContext';
+import AuthStack from './AuthStack';
+import MainStack from './MainStack';
 
-const Stack = createNativeStackNavigator<AppStackParamList>();
+export default function AppNavigator() {
+  const { user, isLoading } = useAuth();
 
-const AppNavigator = () => {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
-    </Stack.Navigator>
-  );
-};
+  if (isLoading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#6C63FF" />
+      </View>
+    );
+  }
 
-export default AppNavigator;
+  // user hai = Main app, nahi = Auth screens
+  return user ? <MainStack /> : <AuthStack />;
+}
 
-// import * as React from 'react';
-// import {createStaticNavigation} from '@react-navigation/native';
-// import {createNativeStackNavigator} from '@react-navigation/native-stack';
-// import HomeScreen from '../screens/HomeScreen';
-// import ProfileScreen from '../screens/ProfileScreen';
-
-// const RootStack = createNativeStackNavigator({
-//   screens: {
-//     Home: {
-//       screen: HomeScreen,
-//       options: {title: 'Welcome'},
-//     },
-//     Profile: {
-//       screen: ProfileScreen,
-//     },
-//   },
-// });
-
-// const Navigation = createStaticNavigation(RootStack);
-
-// export default function App() {
-//   return <Navigation />;
-// }
+const styles = StyleSheet.create({
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F8F7FF',
+  },
+});

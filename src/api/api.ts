@@ -35,8 +35,7 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("user");
+      await AsyncStorage.multiRemove(["token", "user"]);
       navigate("Login"); // Redirect to AuthStack Login
     }
     return Promise.reject(error);
