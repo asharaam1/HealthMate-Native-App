@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/api';
-import type { User } from '../types'; // ✅ shared type use karo
+import type { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signup = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const res = await api.post('/auth/signup', { name, email, password });
+      const res = await api.post('/auth/register', { name, email, password });
       const { user, token } = res.data;
       await AsyncStorage.multiSet([
         ['user', JSON.stringify(user)],

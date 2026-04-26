@@ -8,11 +8,12 @@ import VitalsScreen from '../screens/VitalsScreen';
 import TimelineScreen from '../screens/TimelineScreen';
 import ReportDetailScreen from '../screens/ReportDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTheme } from '../theme/theme';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
-// Home ke andar nested stack — ReportDetail aur Profile bhi isi mein
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -23,45 +24,84 @@ function HomeStack() {
   );
 }
 
-// Main bottom tab navigator
 export default function MainStack() {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.card,
           borderTopWidth: 0.5,
-          borderTopColor: '#E5E5E5',
+          borderTopColor: colors.border,
           height: 60,
           paddingBottom: 8,
+          paddingTop: 4,
         },
-        tabBarActiveTintColor: '#6C63FF',
-        tabBarInactiveTintColor: '#9E9E9E',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textTertiary,
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '500',
+          marginBottom: 4,
         },
-      }}>
+      }}
+    >
       <Tab.Screen
         name="HomeTab"
         component={HomeStack}
-        options={{ tabBarLabel: 'Home' }}
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon
+              name={focused ? 'home' : 'home-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
       />
+
       <Tab.Screen
         name="Upload"
         component={UploadScreen}
-        options={{ tabBarLabel: 'Upload' }}
+        options={{
+          title: 'Upload',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon
+              name={focused ? 'cloud-upload' : 'cloud-upload-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
       />
+
       <Tab.Screen
         name="Vitals"
         component={VitalsScreen}
-        options={{ tabBarLabel: 'Vitals' }}
+        options={{
+          title: 'Vitals',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="heart-pulse" size={size} color={color} />
+          ),
+        }}
       />
+
       <Tab.Screen
         name="Timeline"
         component={TimelineScreen}
-        options={{ tabBarLabel: 'Timeline' }}
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon
+              name={focused ? 'history' : 'history'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

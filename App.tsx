@@ -1,18 +1,21 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { FamilyMemberProvider } from './src/context/FamilyMemberContext';
+import { ReportProvider } from './src/context/ReportContext';
+import { VitalsProvider } from './src/context/VitalsContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthStack from './src/navigation/AuthStack';
 import { navigationRef } from './src/navigation/RootNavigation';
-import { SafeAreaProvider } from 'react-native-safe-area-context'; // ← yeh
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
 import { useTheme } from './src/theme/theme';
 
 const AppContent = () => {
   const { user, isLoading } = useAuth();
   const { colors } = useTheme();
+
   if (isLoading) {
-    // You can add a splash screen here
     return null;
   }
 
@@ -34,7 +37,13 @@ const App = () => {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <AppContent />
+        <FamilyMemberProvider>
+          <ReportProvider>
+            <VitalsProvider>
+              <AppContent />
+            </VitalsProvider>
+          </ReportProvider>
+        </FamilyMemberProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
