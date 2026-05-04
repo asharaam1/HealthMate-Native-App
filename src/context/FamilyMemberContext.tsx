@@ -1,41 +1,13 @@
 // src/context/FamilyMemberContext.tsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import api from '../api/api';
+import type { FamilyMember, FamilyMemberContextType } from '../types/index'; 
 
 interface ProfileImage {
   url: string;
   publicId: string;
 }
 
-interface FamilyMember {
-  _id: string;
-  userId: string;
-  name: string;
-  relationship: string;
-  dateOfBirth: string;
-  gender: string;
-  bloodGroup?: string;
-  phone?: string;
-  profileImage?: ProfileImage;
-  medicalConditions?: string[];
-  allergies?: string[];
-  isActive: boolean;
-  age?: number;
-}
-
-interface FamilyMemberContextType {
-  members: FamilyMember[];
-  selectedMember: FamilyMember | null;
-  loading: boolean;
-  error: string | null;
-  fetchFamilyMembers: () => Promise<void>;
-  createFamilyMember: (formData: FormData) => Promise<FamilyMember>;
-  updateFamilyMember: (id: string, formData: FormData) => Promise<FamilyMember>;
-  deleteFamilyMember: (id: string) => Promise<void>;
-  deleteFamilyMemberImage: (id: string) => Promise<void>;
-  setSelectedMember: (member: FamilyMember | null) => void;
-  clearError: () => void;
-}
 
 const FamilyMemberContext = createContext<FamilyMemberContextType | undefined>(
   undefined,

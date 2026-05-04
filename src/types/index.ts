@@ -40,6 +40,20 @@ export interface FamilyMember {
   age?: number;
 }
 
+export interface FamilyMemberContextType {
+  members: FamilyMember[];
+  selectedMember: FamilyMember | null;
+  loading: boolean;
+  error: string | null;
+  fetchFamilyMembers: () => Promise<void>;
+  createFamilyMember: (formData: FormData) => Promise<FamilyMember>;
+  updateFamilyMember: (id: string, formData: FormData) => Promise<FamilyMember>;
+  deleteFamilyMember: (id: string) => Promise<void>;
+  deleteFamilyMemberImage: (id: string) => Promise<void>;
+  setSelectedMember: (member: FamilyMember | null) => void;
+  clearError: () => void;
+}
+
 // ============ AI Summary ============
 export interface AbnormalValue {
   parameter: string;
