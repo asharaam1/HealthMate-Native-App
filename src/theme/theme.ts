@@ -54,7 +54,8 @@ const light = {
     backgroundSecond: '#FFFFFF',   // card / surface
     backgroundThird: '#F9FAFB',   // subtle section bg
     backgroundInverse: '#064E3B',   // inverse (e.g. dark header)
-
+    white:'#FFFFFF',
+    
     // Cards & Surfaces
     card: '#FFFFFF',
     cardBorder: '#E5E7EB',
@@ -119,6 +120,7 @@ const dark: Omit<typeof light, 'statusBar'> & { statusBar: StatusBarStyle } = {
     backgroundSecond: '#1A2E28',
     backgroundThird: '#162420',
     backgroundInverse: '#A7F3D0',
+    white:'#FFFFFF',
 
     // Cards & Surfaces
     card: '#1A2E28',
