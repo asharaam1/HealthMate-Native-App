@@ -1,564 +1,611 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  Image,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/theme';
 import { useAuth } from '../context/AuthContext';
 import { useReports } from '../hooks/useReports';
 import { useVitals } from '../hooks/useVitals';
-import { Report, Vital } from '../types';
-import { HomeStackParamList } from '../navigation/types';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
+import { ReportCard } from '../components/ReportCard';
+import api from '../api/api';
 
-type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
+const { width, height } = Dimensions.get('window');
 
-// Helpers
-const getGreeting = () => {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good Morning';
-  if (h < 17) return 'Good Afternoon';
-  return 'Good Evening';
-};
-
-const getInitials = (name: string) =>
-  name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
-// StatCard Component
-const StatCard = ({
-  label,
-  value,
-  color,
-  bgColor,
+// ============ Animated Components ============
+const FadeInView = ({
+  children,
+  delay = 0,
 }: {
-  label: string;
-  value: string;
-  color: string;
-  bgColor: string;
+  children: React.ReactNode;
+  delay?: number;
 }) => {
-  const { colors, radius } = useTheme();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 600,
+        delay,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   return (
-    <View
-      style={[
-        styles.statCard,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.cardBorder,
-          borderRadius: radius.md,
-        },
-      ]}
-    >
-      <View style={[styles.statDot, { backgroundColor: bgColor }]}>
-        <View style={[styles.statDotInner, { backgroundColor: color }]} />
-      </View>
-      <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-        {value}
-      </Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-        {label}
-      </Text>
-    </View>
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
   );
 };
 
-// ReportCard Component
-const TYPE_ICONS: Record<string, string> = {
-  'Lab Report': '🧪',
-  'X-Ray': '🦴',
-  Prescription: '💊',
-  Ultrasound: '🔊',
-  Other: '📄',
-};
+const PulseAnimation = ({ children }: { children: React.ReactNode }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-const ReportCard = ({
-  report,
-  onPress,
-}: {
-  report: Report;
-  onPress: () => void;
-}) => {
-  const { colors, radius } = useTheme();
-  const analyzed = report.status === 'Analyzed';
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.05,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.reportCard,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.cardBorder,
-          borderRadius: radius.lg,
-        },
-      ]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View
-        style={[
-          styles.reportIcon,
-          {
-            backgroundColor: colors.primaryLight,
-            borderRadius: radius.md,
-          },
-        ]}
-      >
-        <Text style={{ fontSize: 22 }}>{TYPE_ICONS[report.type] ?? '📄'}</Text>
-      </View>
-
-      <View style={styles.reportInfo}>
-        <Text
-          style={[styles.reportTitle, { color: colors.textPrimary }]}
-          numberOfLines={1}
-        >
-          {report.title}
-        </Text>
-        <Text style={[styles.reportMeta, { color: colors.textSecondary }]}>
-          {report.type} · {report.date}
-        </Text>
-        {report.aiSummary && (
-          <Text
-            style={[styles.reportPreview, { color: colors.textTertiary }]}
-            numberOfLines={1}
-          >
-            {report.aiSummary.en}
-          </Text>
-        )}
-      </View>
-
-      <View
-        style={[
-          styles.badge,
-          {
-            backgroundColor: analyzed
-              ? colors.statusAnalyzedBg
-              : colors.statusPendingBg,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.badgeText,
-            {
-              color: analyzed ? colors.statusAnalyzed : colors.statusPending,
-            },
-          ]}
-        >
-          {report.status}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      {children}
+    </Animated.View>
   );
 };
 
-//  VitalChip Component
-const VitalChip = ({ vital }: { vital: Vital }) => {
-  const { colors, radius } = useTheme();
-  const map: Record<
-    string,
-    { color: string; bg: string; icon: string; unit: string }
-  > = {
-    BP: {
-      color: colors.vitalBP,
-      bg: colors.vitalBPBg,
-      icon: '❤️',
-      unit: 'mmHg',
-    },
-    Sugar: {
-      color: colors.vitalSugar,
-      bg: colors.vitalSugarBg,
-      icon: '🩸',
-      unit: 'mg/dL',
-    },
-    Weight: {
-      color: colors.vitalWeight,
-      bg: colors.vitalWeightBg,
-      icon: '⚖️',
-      unit: 'kg',
-    },
-    Oxygen: {
-      color: colors.vitalOxygen,
-      bg: colors.vitalOxygenBg,
-      icon: '💨',
-      unit: '%',
-    },
-    Other: {
-      color: colors.textSecondary,
-      bg: colors.backgroundThird,
-      icon: '📊',
-      unit: '',
-    },
+// ============ Components ============
+const Header = ({ userName, profileImage, onPress }: any) => {
+  const { colors } = useTheme();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-50)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
   };
-  const c = map[vital.type] ?? map.Other;
+
   return (
-    <View
+    <Animated.View
       style={[
-        styles.vitalChip,
-        { backgroundColor: c.bg, borderRadius: radius.md },
+        styles.header,
+        { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
       ]}
     >
-      <Text style={{ fontSize: 18 }}>{c.icon}</Text>
-      <View>
-        <Text style={[styles.vitalLabel, { color: c.color }]}>
-          {vital.type}
-        </Text>
-        <Text style={[styles.vitalValue, { color: c.color }]}>
-          {vital.value} <Text style={{ fontSize: 10 }}>{c.unit}</Text>
-        </Text>
-      </View>
-    </View>
+      <LinearGradient
+        colors={[colors.primary, colors.primaryDark]}
+        style={styles.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={styles.greeting}>{getGreeting()} 👋</Text>
+            <Text style={styles.userName}>{userName}</Text>
+          </View>
+          <TouchableOpacity onPress={onPress} style={styles.avatarContainer}>
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.avatar} />
+            ) : (
+              <LinearGradient
+                colors={[colors.white, colors.primaryLight]}
+                style={styles.avatarPlaceholder}
+              >
+                <Text style={styles.avatarText}>
+                  {userName?.charAt(0)?.toUpperCase() || 'U'}
+                </Text>
+              </LinearGradient>
+            )}
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    </Animated.View>
   );
 };
 
-// HomeScreen
-export default function HomeScreen() {
-  const { colors, radius } = useTheme();
-  const { user } = useAuth();
-  const navigation = useNavigation<HomeNavProp>();
+const HealthScoreCard = ({
+  score,
+  trend,
+}: {
+  score: number;
+  trend: 'up' | 'down' | 'stable';
+}) => {
+  const { colors } = useTheme();
+  const spinAnim = useRef(new Animated.Value(0)).current;
 
+  useEffect(() => {
+    Animated.timing(spinAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const spin = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <FadeInView delay={100}>
+      <LinearGradient
+        colors={[colors.primary, colors.primaryDark]}
+        style={styles.scoreCard}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <Animated.View
+          style={[styles.scoreRing, { transform: [{ rotate: spin }] }]}
+        >
+          <Icon name="heart-pulse" size={50} color={colors.white} />
+        </Animated.View>
+        <Text style={styles.scoreValue}>{score}</Text>
+        <Text style={styles.scoreLabel}>Health Score</Text>
+        <View style={styles.trendContainer}>
+          <Icon
+            name={
+              trend === 'up'
+                ? 'trending-up'
+                : trend === 'down'
+                ? 'trending-down'
+                : 'minus'
+            }
+            size={16}
+            color={colors.white}
+          />
+          <Text style={styles.trendText}>
+            {trend === 'up'
+              ? 'Better than last week'
+              : trend === 'down'
+              ? 'Needs attention'
+              : 'Stable'}
+          </Text>
+        </View>
+      </LinearGradient>
+    </FadeInView>
+  );
+};
+
+const QuickActionCard = ({ icon, title, subtitle, onPress, color }: any) => {
+  const { colors } = useTheme();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const onPressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onPressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={[styles.actionCard, { backgroundColor: colors.card }]}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        activeOpacity={0.9}
+      >
+        <LinearGradient
+          colors={[color, color + '80']}
+          style={styles.actionIconContainer}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Icon name={icon} size={28} color={colors.white} />
+        </LinearGradient>
+        <Text style={[styles.actionTitle, { color: colors.textPrimary }]}>
+          {title}
+        </Text>
+        <Text style={[styles.actionSubtitle, { color: colors.textSecondary }]}>
+          {subtitle}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// ============ Main Component ============
+export default function HomeScreen() {
+  const { colors } = useTheme();
+  const navigation = useNavigation<any>();
+  const { user } = useAuth();
   const {
-    reports,
-    isLoading,
+    isLoading: reportsLoading,
     refreshing,
     refresh,
     analyzedCount,
-    pendingCount,
   } = useReports();
-  const { vitals } = useVitals();
+  const { vitals, isLoading: vitalsLoading } = useVitals();
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (isLoading) {
+  const fetchReports = async () => {
+    try {
+      const response = await api.get('/reports?limit=5');
+      setReports(response.data.reports || []);
+    } catch (error) {
+      console.error('Failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchReports();
+    }, []),
+  );
+
+  const recentReports = reports.slice(0, 5);
+
+  if (reportsLoading && vitalsLoading) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loaderText, { color: colors.textSecondary }]}>
+            Loading Health Data...
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
+  const healthScore =
+    analyzedCount > 0 ? Math.min(100, 60 + analyzedCount * 5) : 85;
+  // const recentReports =
+  //   reports && reports.length > 0 ? reports.slice(0, 5) : [];
+
   return (
     <SafeAreaView
-      style={[styles.safe, { backgroundColor: colors.background }]}
-      edges={['top', 'left', 'right']}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <ScrollView
-        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={refresh}
             tintColor={colors.primary}
-            colors={[colors.primary]}
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-              {getGreeting()} 👋
-            </Text>
-            <Text style={[styles.userName, { color: colors.textPrimary }]}>
-              {user?.name ?? 'User'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.avatar, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.navigate('Profile')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.avatarText, { color: colors.primaryText }]}>
-              {getInitials(user?.name ?? 'U')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <Header
+          userName={user?.name?.split(' ')[0] || 'User'}
+          profileImage={user?.profileImage}
+          onPress={() => navigation.navigate('Profile')}
+        />
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <StatCard
-            label="Total"
-            value={String(reports.length)}
-            color={colors.primary}
-            bgColor={colors.primaryLight}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.actionsScroll}
+        >
+          <QuickActionCard
+            icon="cloud-upload"
+            title="Upload Report"
+            subtitle="AI will analyze"
+            onPress={() => navigation.navigate('Upload')}
+            color="#10B981"
           />
-          <StatCard
-            label="Analyzed"
-            value={String(analyzedCount)}
-            color={colors.success}
-            bgColor={colors.successBg}
+          <QuickActionCard
+            icon="heart-pulse"
+            title="Add Vitals"
+            subtitle="Track health"
+            onPress={() =>
+              navigation.navigate('Vitals', { screen: 'AddVitals' })
+            }
+            color="#3B82F6"
           />
-          <StatCard
-            label="Pending"
-            value={String(pendingCount)}
-            color={colors.warning}
-            bgColor={colors.warningBg}
+          <QuickActionCard
+            icon="file-document"
+            title="View Reports"
+            subtitle={`${reports.length} reports`}
+            onPress={() => navigation.navigate('Timeline')}
+            color="#8B5CF6"
           />
-        </View>
+        </ScrollView>
 
-        {/* Latest Vitals */}
-        <View style={styles.row}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Latest Vitals
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Vitals' as any)}
-          >
-            <Text style={[styles.link, { color: colors.primary }]}>
-              See All
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.vitalsRow}>
-          {vitals.map(v => (
-            <VitalChip key={v._id} vital={v} />
-          ))}
-        </View>
+        <HealthScoreCard
+          score={healthScore}
+          trend={analyzedCount > 5 ? 'up' : 'stable'}
+        />
 
-        {/* Recent Reports */}
-        <View style={styles.row}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Recent Reports
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Upload' as any)}
-          >
-            <Text style={[styles.link, { color: colors.primary }]}>
-              + Upload
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Recent Reports
             </Text>
-          </TouchableOpacity>
-        </View>
-
-        {reports.length === 0 ? (
-          <View
-            style={[
-              styles.empty,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.cardBorder,
-                borderRadius: radius.lg,
-              },
-            ]}
-          >
-            <Text style={{ fontSize: 36, marginBottom: 8 }}>📋</Text>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              No Reports Yet
-            </Text>
-            <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-              Upload your first report to get AI-powered insights.
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.emptyBtn,
-                { backgroundColor: colors.primary, borderRadius: radius.md },
-              ]}
-              onPress={() => navigation.navigate('Upload' as any)}
-            >
-              <Text
-                style={{
-                  color: colors.primaryText,
-                  fontSize: 14,
-                  fontWeight: '600',
-                }}
-              >
-                Upload Now
+            <TouchableOpacity onPress={() => navigation.navigate('Timeline')}>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>
+                See All
               </Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          reports.map(report => (
-            <ReportCard
-              key={report._id}
-              report={report}
-              onPress={() => navigation.navigate('ReportDetail', { report })}
-            />
-          ))
-        )}
 
-        <View style={{ height: 24 }} />
+          {recentReports.length === 0 ? (
+            <FadeInView delay={200}>
+              <LinearGradient
+                colors={[colors.card, colors.backgroundSecond]}
+                style={styles.emptyState}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Icon
+                  name="file-document-outline"
+                  size={60}
+                  color={colors.textTertiary}
+                />
+                <Text
+                  style={[styles.emptyTitle, { color: colors.textPrimary }]}
+                >
+                  No Reports Yet
+                </Text>
+                <Text
+                  style={[styles.emptyDesc, { color: colors.textSecondary }]}
+                >
+                  Upload your first report to get AI insights
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.emptyButton,
+                    { backgroundColor: colors.primary },
+                  ]}
+                  onPress={() => navigation.navigate('Upload')}
+                >
+                  <Text
+                    style={[styles.emptyButtonText, { color: colors.white }]}
+                  >
+                    Upload Now
+                  </Text>
+                </TouchableOpacity>
+              </LinearGradient>
+            </FadeInView>
+          ) : (
+            recentReports.map((report, index) => (
+              <ReportCard
+                key={report._id}
+                report={report}
+                onPress={() =>
+                  navigation.navigate('ReportDetail', { reportId: report._id })
+                }
+              />
+            ))
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-  },
-  centered: {
+  container: { flex: 1 },
+  loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 32,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  greeting: {
-    fontSize: 13,
-  },
-  userName: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 28,
-  },
-  statCard: {
-    flex: 1,
-    padding: 14,
-    borderWidth: 0.5,
-    alignItems: 'center',
-  },
-  statDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statDotInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 11,
-    textAlign: 'center',
-  },
-
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  link: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  vitalsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 28,
-    flexWrap: 'wrap',
-  },
-  vitalChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    minWidth: '30%',
-  },
-  vitalLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  vitalValue: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-
-  reportCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 0.5,
     gap: 12,
   },
-  reportIcon: {
-    width: 48,
-    height: 48,
+  loaderText: { fontSize: 14 },
+
+  header: { width: '100%' },
+  headerGradient: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  greeting: { fontSize: 14, color: 'rgba(255,255,255,0.9)' },
+  userName: { fontSize: 24, fontWeight: '700', color: '#fff', marginTop: 4 },
+  avatarContainer: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  avatar: { width: 52, height: 52, borderRadius: 26 },
+  avatarPlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  reportInfo: {
-    flex: 1,
-    gap: 3,
-  },
-  reportTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  reportMeta: {
-    fontSize: 12,
-  },
-  reportPreview: {
-    fontSize: 12,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
+  avatarText: { fontSize: 24, fontWeight: '700', color: '#10B981' },
 
-  empty: {
+  actionsScroll: { paddingHorizontal: 16, paddingVertical: 20, gap: 16 },
+  actionCard: {
+    width: width * 0.28,
+    padding: 12,
+    borderRadius: 20,
     alignItems: 'center',
-    padding: 32,
-    borderWidth: 0.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  actionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
   },
+  actionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  actionSubtitle: { fontSize: 10, textAlign: 'center' },
+
+  scoreCard: {
+    marginHorizontal: 20,
+    marginVertical: 8,
+    padding: 24,
+    borderRadius: 28,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  scoreRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  scoreValue: { fontSize: 48, fontWeight: '800', color: '#fff', marginTop: 16 },
+  scoreLabel: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  trendContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  trendText: { fontSize: 11, color: '#fff' },
+
+  section: { paddingHorizontal: 20, marginTop: 16, marginBottom: 24 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: { fontSize: 18, fontWeight: '700' },
+  seeAll: { fontSize: 13, fontWeight: '600' },
+
+  reportCard: {
+    marginBottom: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  reportCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+  },
+  reportIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+  },
+  reportIcon: { fontSize: 28 },
+  reportInfo: { flex: 1, gap: 2 },
+  reportTitle: { fontSize: 15, fontWeight: '600' },
+  reportDate: { fontSize: 12 },
+  reportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  reportBadgeText: { fontSize: 9, fontWeight: '600' },
+
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+    borderRadius: 24,
+    marginTop: 20,
+  },
   emptyTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
     marginBottom: 8,
   },
-  emptyDesc: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  emptyBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-  },
+  emptyDesc: { fontSize: 14, textAlign: 'center', marginBottom: 20 },
+  emptyButton: { paddingHorizontal: 28, paddingVertical: 12, borderRadius: 25 },
+  emptyButtonText: { fontSize: 14, fontWeight: '600' },
 });
