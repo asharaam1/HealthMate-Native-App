@@ -1,97 +1,253 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# HealthMate – Sehat ka Smart Dost
+A bilingual (English + Roman Urdu) AI-powered personal health companion mobile app for managing medical reports and tracking health vitals.
 
-# Getting Started
+---
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 📱 The Real-Life Story
+Every family has someone who needs regular tests and prescriptions. Managing all those files, reports, and follow-ups becomes very hard. When the doctor asks, *"Pichlay reports laao"*, we start digging through WhatsApp or old folders 😩.
 
-## Step 1: Start Metro
+**Goal:** Build a mobile app where individuals can upload all their medical reports, store them safely, and get AI-powered summaries in simple words.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+---
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## 💡 The Big Idea – HealthMate
+A personal health vault mobile app where you can:
 
-```sh
-# Using npm
-npm start
+- 📄 Upload all test reports & prescriptions
+- 🤖 Let Gemini AI read and explain the reports (no manual OCR needed)
+- 📝 Get easy-to-understand summaries (English + Roman Urdu)
+- 📅 View your entire medical timeline in one place
+- ❤️ Manually add vitals (BP, Sugar, Weight, etc.) even without lab reports
+- 👨‍👩‍👧 Manage health records for multiple family members
 
-# OR using Yarn
-yarn start
+**Example:** *"On 10th Oct, BP was 130/80, Sugar 95"* — add it as a manual entry to track regular health.
+
+---
+
+## 🧩 Tech Stack
+| Category           | Technology                       |
+| ------------------ | -------------------------------- |
+| **Frontend**       | React Native (0.85) + TypeScript |
+| **Backend**        | Node.js + Express                |
+| **Database**       | MongoDB (Atlas)                  |
+| **AI Model**       | Google Gemini 2.5 flash          |
+| **Storage**        | Cloudinary                       |
+| **Authentication** | JWT + AsyncStorage               |
+| **Navigation**     | React Navigation (Tab + Stack)   |
+
+> ⚡ Gemini can directly read PDFs, images, and scanned reports — no OCR needed.
+
+---
+
+## Step-by-Step Journey
+| Step   | Task                     | Roman Urdu Explanation                                                      |
+| ------ | ------------------------ | --------------------------------------------------------------------------- |
+| 1️⃣    | Understand the Problem   | Samjho ke problem kya hai – reports manage karna aur unka samajhna          |
+| 2️⃣    | Project Setup            | React Native CLI project + TypeScript setup                                 |
+| 3️⃣    | Design Database Models   | Models: User, FamilyMember, Report, ManualVitals                            |
+| 4️⃣    | Setup Auth (JWT)         | Login/Register backend + protected routes                                   |
+| 5️⃣    | Family Member Management | Add/edit/delete family members (self, spouse, children, parents)            |
+| 6️⃣    | File Upload System       | PDF or image upload to Cloudinary                                           |
+| 7️⃣    | Gemini Integration       | Send uploaded file directly to Gemini for analysis                          |
+| 8️⃣    | AI Summary Generation    | Gemini se summary + Roman Urdu explanation + doctor questions               |
+| 9️⃣    | UI Screens               | Onboarding, Login/Signup, Home Dashboard, Upload, Vitals, Timeline, Profile |
+| 🔟     | Add Manual Vitals        | User manually adds BP, Sugar, Weight readings (without reports)             |
+| 1️⃣1️⃣ | Push Notifications       | Local notifications when AI analysis completes                              |
+| 1️⃣2️⃣ | Security + Privacy       | JWT + encrypted storage + medical disclaimers                               |
+| 1️⃣3️⃣ | Testing & Build          | Android APK generation + testing                                            |
+
+---
+
+## 🧠 How Gemini Helps
+Gemini reads your uploaded PDF or image directly — whether lab report, X-ray result, or ultrasound summary — and explains it in simple words:
+
+✅ Highlights abnormal values (e.g., WBC high, Hb low)  
+✅ Gives bilingual (English + Roman Urdu) summary  
+✅ Suggests 3–5 questions to ask your doctor  
+✅ Recommends foods to avoid and better foods to eat  
+✅ Suggests home remedies  
+✅ Adds disclaimer: *"Always consult your doctor before making any decision."*
+
+---
+
+## 🏗️ Architecture (High-Level)
+```
+Mobile App (React Native)
+↓
+Backend API (Node.js)
+↓
+MongoDB + Cloudinary
+↓
+Gemini AI (Google)
 ```
 
-## Step 2: Build and run your app
+**Flow:**
+1. User uploads file or enters vitals manually
+2. Backend sends data to Gemini for analysis
+3. Gemini returns bilingual explanation
+4. Backend saves results in MongoDB and Cloudinary
+5. App shows report + summary + vitals timeline
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+---
 
-### Android
+## 🎨 UI Screens
+| Screen               | Description                                                |
+| -------------------- | ---------------------------------------------------------- |
+| **Onboarding**       | 3-step intro to app features                               |
+| **Login / Register** | User authentication with JWT                               |
+| **Home Dashboard**   | Health score, recent reports, quick actions                |
+| **Upload Report**    | PDF/image upload + date + type + family member             |
+| **Reports Timeline** | List of all reports with AI status                         |
+| **Report Detail**    | View report image + AI summary (English/Roman Urdu toggle) |
+| **Vitals Tracking**  | List of all vitals + FAB to add new                        |
+| **Add Vitals**       | BP, Sugar, Weight, Heart Rate, Oxygen Level                |
+| **Vital Analysis**   | AI insights for vitals trends                              |
+| **Profile**          | User info, family members, settings                        |
+| **Edit Profile**     | Update name, phone, DOB, gender, blood group, photo        |
 
-```sh
-# Using npm
-npm run android
+---
 
-# OR using Yarn
-yarn android
+## 📁 Project Structure
+
+### Frontend (React Native)
+```
+src/
+├── api/ # API service calls
+├── components/ # Reusable UI components
+├── constants/ # Colors, theme constants
+├── context/ # Auth, Reports, Vitals, Family Context
+├── hooks/ # Custom hooks for data fetching
+├── navigation/ # Tab + Stack navigators
+├── screens/ # All UI screens
+├── theme/ # Light/Dark theme support
+├── types/ # TypeScript interfaces
+└── utils/ # Helper functions, notifications
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+### Backend (Node.js)
+```
+backend/
+├── config/ # Cloudinary, Gemini config
+├── controllers/ # Auth, Reports, Vitals, Family controllers
+├── middleware/ # Auth, Upload middleware
+├── models/ # MongoDB models
+└── routes/ # API routes
 ```
 
-Then, and every time you update your native dependencies, run:
+---
 
-```sh
-bundle exec pod install
+## 🔐 Security & Privacy
+- ✅ JWT-based authentication with 7-day expiration
+- ✅ Cloudinary signed URLs for file access
+- ✅ Passwords hashed with bcryptjs
+- ✅ AsyncStorage for local session persistence
+- ✅ Medical disclaimer on all AI outputs
+
+> **Disclaimer:** *"This AI summary is for understanding only, not medical advice. Always consult your doctor."*  
+> **Roman Urdu:** *"Yeh AI sirf samajhne ke liye hai, ilaaj ke liye nahi."*
+
+---
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+- Node.js (v18+)
+- MongoDB Atlas account
+- Cloudinary account
+- Google Gemini API key
+
+### Backend Setup
+```bash
+cd backend
+npm install
+cp .env.example .env  # Add your keys
+npm run dev
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+### Frontend Setup
+```bash
+npm install
+npm run android  # or
+npx react-native start  # (in one terminal)
+npx react-native run-android  # (in another terminal) For Android
+# npx react-native run-ios    # For iOS (Mac only)
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Environment Variables (.env)
+```
+env
+PORT=3000
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+GEMINI_API_KEY=your_gemini_key
+```
 
-## Step 3: Modify your app
+### 📱 Build APK
+```bash
+cd android
+./gradlew assembleRelease
+```
+- APK location: android/app/build/outputs/apk/release/app-release.apk
 
-Now that you have successfully run the app, let's make changes!
+## 💬 Key Features Summary
+| Feature                   | Status                          |
+| ------------------------- | ------------------------------- |
+| User Authentication       | ✅ JWT + AsyncStorage            |
+| Family Member Management  | ✅ CRUD operations               |
+| Report Upload (PDF/Image) | ✅ Cloudinary storage            |
+| AI Medical Analysis       | ✅ Gemini 1.5 Pro                |
+| Bilingual Output          | ✅ English + Roman Urdu          |
+| Manual Vitals Tracking    | ✅ BP, Sugar, Weight, Heart Rate |
+| AI Vitals Insights        | ✅ Trends and recommendations    |
+| Local Notifications       | ✅ When AI analysis completes    |
+| Dark/Light Theme          | ✅ Full theme support            |
+| Profile Management        | ✅ Photo upload, edit info       |
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## 🔮 Future Integrations
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+| Feature                           | Status     | Description                                     |
+| --------------------------------- | ---------- | ----------------------------------------------- |
+| 💊 Medicine Reminder              | 🚧 Planned | Smart reminders for medication schedules        |
+| 📊 Health Charts                  | 🚧 Planned | Visual graphs for BP, Sugar, Weight trends      |
+| 🏥 Doctor Appointment Booking     | 🚧 Planned | Book appointments directly from app             |
+| 📤 Share Reports                  | 🚧 Planned | Share AI analysis via WhatsApp/PDF              |
+| 🔔 Push Notifications             | 🚧 Planned | Real-time Firebase notifications                |
+| 🌍 Full Multi-language            | 🚧 Planned | Complete app translation (Urdu, Sindhi, Pashto) |
+| 📱 Wearable Integration           | 🚧 Planned | Connect with smartwatches for real-time vitals  |
+| 🏆 Health Score Gamification      | 🚧 Planned | Earn badges for regular health tracking         |
+| 👨‍👩‍👧‍👦 Multi-profile Support | 🚧 Planned | Switch between family members quickly           |
+| 💾 Offline Mode                   | 🚧 Planned | Access reports without internet                 |
+| 📄 Export Medical History         | 🚧 Planned | Download complete medical history as PDF        |
+| 🤖 Enhanced AI Analysis           | 🚧 Planned | Disease prediction and risk assessment          |
+| 📹 Video Consultation             | 🚧 Planned | Connect with doctors via video call             |
+| 🏥 Nearby Labs & Hospitals        | 🚧 Planned | Find nearest diagnostic centers                 |
+| 💳 Insurance Integration          | 🚧 Planned | Claim submission and tracking                   |
 
-## Congratulations! :tada:
+---
 
-You've successfully run and modified your React Native App. :partying_face:
+### 💬 Final Words
+- "Yeh sirf ek project nahi, ek real-life problem ka digital solution hai."
 
-### Now what?
+- "AI ke zariye kisi ke liye life easy banana — that's real impact."
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+**Goal**: Ek simple, secure, aur helpful mobile solution banana that makes healthcare management easier for everyone.
 
-# Troubleshooting
+### 📄 License
+MIT License - Feel free to use, modify, and distribute.
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+### 🤝 Contributors
+| Name      | Role                 |
+| --------- | -------------------- |
+| Asha Ram  | Full Stack Developer |
+🔗 Links
+- [**GitHub Frontend**](https://github.com/asharaam1/HealthMate-Native-App) 
+- [**GitHub Backend**](https://github.com/asharaam1/HealthMate-Native-App-backend) 
 
-# Learn More
 
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Made with ❤️ for better healthcare management
+---
