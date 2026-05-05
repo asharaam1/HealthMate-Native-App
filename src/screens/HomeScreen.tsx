@@ -431,7 +431,10 @@ export default function HomeScreen() {
                 key={report._id}
                 report={report}
                 onPress={() =>
-                  navigation.navigate('ReportDetail', { reportId: report._id })
+                  navigation.navigate('Timeline', {
+                    screen: 'ReportDetail',
+                    params: { reportId: report._id },
+                  })
                 }
               />
             ))

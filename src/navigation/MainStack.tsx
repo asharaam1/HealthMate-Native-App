@@ -23,7 +23,7 @@ function HomeStackScreen() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home" component={HomeScreen} />
-      <HomeStack.Screen name="ReportDetail" component={ReportDetailScreen} />
+      {/* <HomeStack.Screen name="ReportDetail" component={ReportDetailScreen} /> */}
     </HomeStack.Navigator>
   );
 }
@@ -43,8 +43,20 @@ function VitalsStackScreen() {
   );
 }
 
-const ProfileStack = createNativeStackNavigator();
+const TimelineStack = createNativeStackNavigator();
+function TimelineStackScreen() {
+  return (
+    <TimelineStack.Navigator screenOptions={{ headerShown: false }}>
+      <TimelineStack.Screen name="TimelineList" component={TimelineScreen} />
+      <TimelineStack.Screen
+        name="ReportDetail"
+        component={ReportDetailScreen}
+      />
+    </TimelineStack.Navigator>
+  );
+}
 
+const ProfileStack = createNativeStackNavigator();
 function ProfileStackScreen() {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
@@ -125,9 +137,9 @@ export default function MainStack() {
 
       <Tab.Screen
         name="Timeline"
-        component={TimelineScreen}
+        component={TimelineStackScreen}
         options={{
-          title: 'History',
+          title: 'Reports',
           tabBarIcon: ({ color, size, focused }) => (
             <Icon
               name={focused ? 'history' : 'history'}

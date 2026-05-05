@@ -142,6 +142,15 @@ export default function UploadScreen() {
       formData.append('notes', notes);
 
       await uploadReport(formData);
+
+      // ✅ RESET FORM 
+      setSelectedFile(null);
+      setReportTitle('');
+      setReportType('blood-test');
+      setReportDate(new Date());
+      setNotes('');
+      setSelectedMemberId(null);
+
       Alert.alert('Success!', 'Report uploaded. AI analysis in progress.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);

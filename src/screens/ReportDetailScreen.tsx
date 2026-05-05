@@ -179,7 +179,13 @@ export default function ReportDetailScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Timeline');
+            }
+          }}
           style={styles.backButton}
         >
           <Icon name="arrow-left" size={24} color={colors.textPrimary} />

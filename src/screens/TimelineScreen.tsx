@@ -29,10 +29,8 @@ export default function TimelineScreen() {
     setRefreshing(false);
   }, []);
 
-  // const handleReportPress = (report: Report) => {
-  //   na
   const handleReportPress = (report: Report) => {
-    navigation.navigate('HomeTab', {
+    navigation.navigate('Timeline', {
       screen: 'ReportDetail',
       params: { reportId: report._id },
     });
