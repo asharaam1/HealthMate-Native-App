@@ -1,66 +1,13 @@
 // src/context/ReportContext.tsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import api from '../api/api';
-
-interface AbnormalValue {
-  parameter: string;
-  value: string;
-  normalRange: string;
-  status: 'high' | 'low' | 'critical';
-}
-
-interface AISummary {
-  englishSummary: string;
-  romanUrduSummary: string;
-  abnormalValues: AbnormalValue[];
-  doctorQuestions: string[];
-  foodsToAvoid: string[];
-  recommendedFoods: string[];
-  homeRemedies: string[];
-  disclaimer: string;
-}
-
-interface Report {
-  _id: string;
-  userId: string;
-  familyMemberId: string;
-  title: string;
-  reportType: string;
-  reportDate: string;
-  file: {
-    url: string;
-    publicId: string;
-    fileType: string;
-  };
-  aiSummary: AISummary;
-  notes: string;
-  isProcessed: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ReportsResponse {
-  reports: Report[];
-  total: number;
-  page: number;
-  pages: number;
-}
-
-interface ReportContextType {
-  reports: Report[];
-  currentReport: Report | null;
-  loading: boolean;
-  error: string | null;
-  total: number;
-  page: number;
-  pages: number;
-  uploadReport: (formData: FormData) => Promise<Report>;
-  getReports: (params?: any) => Promise<void>;
-  getReportById: (id: string) => Promise<Report>;
-  deleteReport: (id: string) => Promise<void>;
-  clearError: () => void;
-  clearCurrentReport: () => void;
-}
+import type {
+  Report,
+  ReportsResponse,
+  AISummary,
+  AbnormalValue,
+  ReportContextType,
+} from '../types/index';
 
 const ReportContext = createContext<ReportContextType | undefined>(undefined);
 

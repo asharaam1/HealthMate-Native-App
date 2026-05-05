@@ -247,6 +247,22 @@ export interface ReportsResponse {
   pages: number;
 }
 
+export interface ReportContextType {
+  reports: Report[];
+  currentReport: Report | null;
+  loading: boolean;
+  error: string | null;
+  total: number;
+  page: number;
+  pages: number;
+  uploadReport: (formData: FormData) => Promise<Report>;
+  getReports: (params?: any) => Promise<void>;
+  getReportById: (id: string) => Promise<Report>;
+  deleteReport: (id: string) => Promise<void>;
+  clearError: () => void;
+  clearCurrentReport: () => void;
+}
+
 export interface VitalsResponse {
   vitals: Vitals[];
   total: number;

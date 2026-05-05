@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/theme';
 import { useReports } from '../context/ReportContext';
 import { useFamilyMembers } from '../context/FamilyMemberContext';
-import * as DocumentPicker from '@react-native-documents/picker';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { FilePicker } from '../components/FilePicker';
-import { ReportTypeChip } from '../components/ReportTypeChip';
-import { FamilyMemberSelector } from '../components/FamilyMemberSelector';
+import { pick, types } from '@react-native-documents/picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 type ReportType =
   | 'blood-test'
@@ -28,34 +27,21 @@ type ReportType =
   | 'ultrasound'
   | 'other';
 
-const REPORT_TYPES: { label: string; value: ReportType; icon: string }[] = [
-  { label: 'Blood Test', value: 'blood-test', icon: '🧪' },
+const REPORT_TYPES = [
+  { label: 'Blood Test', value: 'blood-test', icon: '🩸' },
   { label: 'X-Ray', value: 'x-ray', icon: '🦴' },
   { label: 'Prescription', value: 'prescription', icon: '💊' },
   { label: 'Ultrasound', value: 'ultrasound', icon: '🔊' },
   { label: 'Other', value: 'other', icon: '📄' },
 ];
 
-const formatDate = (date: Date): string =>
-  date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-
-const formatFileSize = (bytes?: number): string => {
-  if (!bytes) return '';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
 export default function UploadScreen() {
-  const { colors, radius, spacing } = useTheme();
+  const { colors, radius } = useTheme();
+  const navigation = useNavigation();
   const { uploadReport } = useReports();
-  const { members } = useFamilyMembers();
+  const { members, fetchFamilyMembers } = useFamilyMembers();
 
-  const [pickedFile, setPickedFile] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<any>(null);
   const [reportType, setReportType] = useState<ReportType>('blood-test');
   const [reportTitle, setReportTitle] = useState('');
   const [reportDate, setReportDate] = useState(new Date());
@@ -64,46 +50,51 @@ export default function UploadScreen() {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Auto-select first family member
-  React.useEffect(() => {
-    if (members.length > 0 && !selectedMemberId) {
-      setSelectedMemberId(members[0]._id);
-    }
-  }, [members]);
+  useEffect(() => {
+    fetchFamilyMembers();
+  }, []);
 
+  // Pick PDF using DocumentPicker
   const pickPDF = async () => {
     try {
-      const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.pdf],
-        allowMultiSelection: false,
+      const result = await pick({
+        type: [types.pdf],
       });
-      const file = result[0];
-      setPickedFile({
-        name: file.name ?? 'document.pdf',
-        uri: file.uri,
-        type: file.type ?? 'application/pdf',
-        size: file.size ?? undefined,
-      });
-      if (!reportTitle && file.name) {
-        setReportTitle(file.name.replace('.pdf', ''));
+
+      if (result[0]) {
+        const file = result[0];
+        setSelectedFile({
+          uri: file.uri,
+          name: file.name,
+          type: file.type || 'application/pdf',
+          size: file.size,
+        });
+        if (!reportTitle && file.name) {
+          setReportTitle(file.name.replace('.pdf', ''));
+        }
       }
-    } catch (err: any) {
-      const isCancelled = err?.code === 'DOCUMENT_PICKER_CANCELED';
-      if (!isCancelled) {
-        Alert.alert('Error', 'Could not pick file. Please try again.');
+    } catch (err) {
+      if (err) {
+        console.log('User cancelled');
+      } else {
+        console.log('Error:', err);
       }
     }
   };
 
-  const pickImage = async () => {
+  // Pick Image using ImagePicker
+  const pickImage = () => {
     launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, response => {
-      if (response.didCancel || response.errorCode) return;
-      const asset = response.assets?.[0];
-      if (asset) {
-        setPickedFile({
-          name: asset.fileName ?? 'image.jpg',
-          uri: asset.uri ?? '',
-          type: asset.type ?? 'image/jpeg',
+      if (response.didCancel) {
+        console.log('User cancelled');
+      } else if (response.errorCode) {
+        console.log('Error:', response.errorMessage);
+      } else if (response.assets && response.assets[0]) {
+        const asset = response.assets[0];
+        setSelectedFile({
+          uri: asset.uri,
+          name: asset.fileName || 'image.jpg',
+          type: asset.type || 'image/jpeg',
           size: asset.fileSize,
         });
         if (!reportTitle && asset.fileName) {
@@ -115,14 +106,14 @@ export default function UploadScreen() {
 
   const showPickerOptions = () => {
     Alert.alert('Select File', 'Choose file type to upload', [
-      { text: 'PDF Document', onPress: pickPDF },
-      { text: 'Image / Photo', onPress: pickImage },
+      { text: '📷 Image / Photo', onPress: pickImage },
+      { text: '📄 PDF Document', onPress: pickPDF },
       { text: 'Cancel', style: 'cancel' },
     ]);
   };
 
   const handleUpload = async () => {
-    if (!pickedFile) {
+    if (!selectedFile) {
       Alert.alert('No File', 'Please select a file first.');
       return;
     }
@@ -140,9 +131,9 @@ export default function UploadScreen() {
     try {
       const formData = new FormData();
       formData.append('file', {
-        uri: pickedFile.uri,
-        type: pickedFile.type,
-        name: pickedFile.name,
+        uri: selectedFile.uri,
+        type: selectedFile.type,
+        name: selectedFile.name,
       } as any);
       formData.append('title', reportTitle);
       formData.append('reportType', reportType);
@@ -150,10 +141,9 @@ export default function UploadScreen() {
       formData.append('familyMemberId', selectedMemberId);
       formData.append('notes', notes);
 
-      const uploaded = await uploadReport(formData);
-
+      await uploadReport(formData);
       Alert.alert('Success!', 'Report uploaded. AI analysis in progress.', [
-        { text: 'OK', onPress: () => resetForm() },
+        { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
       Alert.alert('Upload Failed', err.message || 'Something went wrong.');
@@ -162,45 +152,149 @@ export default function UploadScreen() {
     }
   };
 
-  const resetForm = () => {
-    setPickedFile(null);
-    setReportTitle('');
-    setReportType('blood-test');
-    setReportDate(new Date());
-    setNotes('');
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+
+  const selectedMember = members.find(m => m._id === selectedMemberId);
 
   return (
     <SafeAreaView
-      style={[styles.safe, { backgroundColor: colors.background }]}
-      edges={['top', 'left', 'right']}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Icon name="arrow-left" size={24} color={colors.textPrimary} />
+        </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
           Upload Report
         </Text>
-        <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
-          Gemini AI will analyze it for you
-        </Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <FilePicker
-          pickedFile={pickedFile}
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* File Picker */}
+        <TouchableOpacity
+          style={[
+            styles.filePicker,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderRadius: radius.lg,
+            },
+          ]}
           onPress={showPickerOptions}
-          formatFileSize={formatFileSize}
-        />
+        >
+          {selectedFile ? (
+            <View style={styles.fileInfo}>
+              <Text style={styles.fileIcon}>
+                {selectedFile.type?.includes('pdf') ? '📄' : '🖼️'}
+              </Text>
+              <Text
+                style={[styles.fileName, { color: colors.textPrimary }]}
+                numberOfLines={2}
+              >
+                {selectedFile.name}
+              </Text>
+              <Text style={[styles.fileSize, { color: colors.textSecondary }]}>
+                {formatFileSize(selectedFile.size)}
+              </Text>
+              <TouchableOpacity
+                style={[styles.changeBtn, { borderColor: colors.primary }]}
+                onPress={showPickerOptions}
+              >
+                <Text style={[styles.changeBtnText, { color: colors.primary }]}>
+                  Change File
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.fileEmpty}>
+              <Text style={styles.fileEmptyIcon}>📂</Text>
+              <Text
+                style={[styles.fileEmptyTitle, { color: colors.textPrimary }]}
+              >
+                Select File
+              </Text>
+              <Text
+                style={[styles.fileEmptyDesc, { color: colors.textSecondary }]}
+              >
+                PDF, JPG, PNG supported
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.browseBtn,
+                  { backgroundColor: colors.primary, borderRadius: radius.md },
+                ]}
+                onPress={showPickerOptions}
+              >
+                <Text
+                  style={[styles.browseBtnText, { color: colors.primaryText }]}
+                >
+                  Browse Files
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </TouchableOpacity>
 
-        <FamilyMemberSelector
-          selectedId={selectedMemberId}
-          onSelect={setSelectedMemberId}
-        />
-
+        {/* Family Member Selector */}
         <Text style={[styles.label, { color: colors.textSecondary }]}>
-          Report Title
+          For Whom? *
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.memberScroll}
+        >
+          <View style={styles.memberContainer}>
+            {members.map(member => (
+              <TouchableOpacity
+                key={member._id}
+                style={[
+                  styles.memberChip,
+                  {
+                    backgroundColor:
+                      selectedMemberId === member._id
+                        ? colors.primary
+                        : colors.card,
+                    borderColor:
+                      selectedMemberId === member._id
+                        ? colors.primary
+                        : colors.border,
+                    borderRadius: radius.full,
+                  },
+                ]}
+                onPress={() => setSelectedMemberId(member._id)}
+              >
+                <Text>{member.relationship === 'self' ? '👤' : '👨‍👩‍👧'}</Text>
+                <Text
+                  style={[
+                    styles.memberName,
+                    {
+                      color:
+                        selectedMemberId === member._id
+                          ? colors.primaryText
+                          : colors.textPrimary,
+                    },
+                  ]}
+                >
+                  {member.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+
+        {/* Report Title */}
+        <Text style={[styles.label, { color: colors.textSecondary }]}>
+          Report Title *
         </Text>
         <TextInput
           style={[
@@ -212,29 +306,53 @@ export default function UploadScreen() {
               color: colors.textPrimary,
             },
           ]}
-          placeholder="e.g. CBC Blood Test"
+          placeholder="e.g., CBC Blood Test"
           placeholderTextColor={colors.textTertiary}
           value={reportTitle}
           onChangeText={setReportTitle}
         />
 
+        {/* Report Type */}
         <Text style={[styles.label, { color: colors.textSecondary }]}>
           Report Type
         </Text>
         <View style={styles.typeGrid}>
           {REPORT_TYPES.map(({ label, value, icon }) => (
-            <ReportTypeChip
+            <TouchableOpacity
               key={value}
-              label={label}
-              icon={icon}
-              isActive={reportType === value}
-              onPress={() => setReportType(value)}
-            />
+              style={[
+                styles.typeChip,
+                {
+                  backgroundColor:
+                    reportType === value ? colors.primary : colors.card,
+                  borderColor:
+                    reportType === value ? colors.primary : colors.border,
+                  borderRadius: radius.md,
+                },
+              ]}
+              onPress={() => setReportType(value as ReportType)}
+            >
+              <Text>{icon}</Text>
+              <Text
+                style={[
+                  styles.typeLabel,
+                  {
+                    color:
+                      reportType === value
+                        ? colors.primaryText
+                        : colors.textSecondary,
+                  },
+                ]}
+              >
+                {label}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
 
+        {/* Date Picker */}
         <Text style={[styles.label, { color: colors.textSecondary }]}>
-          Report Date
+          Report Date *
         </Text>
         <TouchableOpacity
           style={[
@@ -247,12 +365,9 @@ export default function UploadScreen() {
           ]}
           onPress={() => setShowDatePicker(true)}
         >
-          <Text style={{ fontSize: 18 }}>📅</Text>
+          <Icon name="calendar" size={20} color={colors.primary} />
           <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-            {formatDate(reportDate)}
-          </Text>
-          <Text style={[styles.dateChange, { color: colors.primary }]}>
-            Change
+            {reportDate.toLocaleDateString()}
           </Text>
         </TouchableOpacity>
 
@@ -260,20 +375,17 @@ export default function UploadScreen() {
           <DateTimePicker
             value={reportDate}
             mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             maximumDate={new Date()}
-            onChange={(_, selected) => {
-              setShowDatePicker(Platform.OS === 'ios');
-              if (selected) setReportDate(selected);
+            onChange={(_, date) => {
+              setShowDatePicker(false);
+              if (date) setReportDate(date);
             }}
           />
         )}
 
+        {/* Notes */}
         <Text style={[styles.label, { color: colors.textSecondary }]}>
-          Notes{' '}
-          <Text style={[styles.optional, { color: colors.textTertiary }]}>
-            (optional)
-          </Text>
+          Notes (Optional)
         </Text>
         <TextInput
           style={[
@@ -285,56 +397,32 @@ export default function UploadScreen() {
               color: colors.textPrimary,
             },
           ]}
-          placeholder="Any additional info for AI analysis..."
+          placeholder="Any additional information..."
           placeholderTextColor={colors.textTertiary}
-          value={notes}
-          onChangeText={setNotes}
           multiline
           numberOfLines={3}
           textAlignVertical="top"
+          value={notes}
+          onChangeText={setNotes}
         />
 
-        <View
-          style={[
-            styles.disclaimer,
-            {
-              backgroundColor: colors.infoBg,
-              borderRadius: radius.md,
-              borderColor: colors.info,
-            },
-          ]}
-        >
-          <Text style={{ fontSize: 14 }}>🤖</Text>
-          <Text style={[styles.disclaimerText, { color: colors.info }]}>
-            AI analysis is for informational purposes only. Always consult your
-            doctor.
-          </Text>
-        </View>
-
+        {/* Upload Button */}
         <TouchableOpacity
           style={[
             styles.uploadBtn,
             {
               backgroundColor:
-                isUploading || !pickedFile || !selectedMemberId
+                isUploading || !selectedFile || !selectedMemberId
                   ? colors.textTertiary
                   : colors.primary,
               borderRadius: radius.lg,
             },
           ]}
           onPress={handleUpload}
-          disabled={isUploading || !pickedFile || !selectedMemberId}
-          activeOpacity={0.8}
+          disabled={isUploading || !selectedFile || !selectedMemberId}
         >
           {isUploading ? (
-            <View style={styles.uploadingRow}>
-              <ActivityIndicator color={colors.primaryText} size="small" />
-              <Text
-                style={[styles.uploadBtnText, { color: colors.primaryText }]}
-              >
-                Uploading...
-              </Text>
-            </View>
+            <ActivityIndicator color={colors.primaryText} />
           ) : (
             <Text style={[styles.uploadBtnText, { color: colors.primaryText }]}>
               Upload & Analyze
@@ -342,108 +430,205 @@ export default function UploadScreen() {
           )}
         </TouchableOpacity>
 
-        <View style={{ height: 32 }} />
+        {/* Disclaimer */}
+        <View
+          style={[
+            styles.disclaimer,
+            { backgroundColor: colors.infoBg, borderRadius: radius.md },
+          ]}
+        >
+          <Text style={{ fontSize: 18 }}>🤖</Text>
+          <Text style={[styles.disclaimerText, { color: colors.info }]}>
+            AI analysis is for informational purposes only. Always consult your
+            doctor.
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  container: {
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 0.5,
   },
+  backButton: {
+    padding: 4,
+  },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  headerSub: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  label: {
-    fontSize: 13,
+    fontSize: 18,
     fontWeight: '600',
+  },
+  content: {
+    padding: 16,
+  },
+
+  filePicker: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    minHeight: 180,
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  fileInfo: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  fileIcon: {
+    fontSize: 48,
     marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
-  optional: {
-    fontWeight: '400',
-    textTransform: 'none',
-    letterSpacing: 0,
+  fileName: {
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 4,
   },
+  fileSize: {
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  changeBtn: {
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  changeBtnText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  fileEmpty: {
+    alignItems: 'center',
+    padding: 28,
+  },
+  fileEmptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  fileEmptyTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  fileEmptyDesc: {
+    fontSize: 13,
+    marginBottom: 16,
+  },
+  browseBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 25,
+  },
+  browseBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  memberScroll: {
+    marginBottom: 12,
+  },
+  memberContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  memberChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  memberName: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+
   input: {
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingVertical: 12,
     fontSize: 15,
-    marginBottom: 20,
-  },
-  textArea: {
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    fontSize: 15,
-    marginBottom: 20,
-    minHeight: 90,
+    marginBottom: 12,
   },
   typeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  typeLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+
   dateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
     borderWidth: 1,
-    marginBottom: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
   },
   dateText: {
+    fontSize: 14,
     flex: 1,
-    fontSize: 15,
   },
-  dateChange: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  disclaimer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    padding: 14,
-    borderWidth: 0.5,
+
+  textArea: {
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    minHeight: 80,
     marginBottom: 20,
+    textAlignVertical: 'top',
   },
-  disclaimerText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 19,
-  },
+
   uploadBtn: {
-    paddingVertical: 17,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 8,
+    marginTop: 8,
   },
   uploadBtnText: {
     fontSize: 16,
     fontWeight: '700',
   },
-  uploadingRow: {
+
+  disclaimer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    padding: 14,
+    marginTop: 20,
+  },
+  disclaimerText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

@@ -10,7 +10,7 @@ import {
   Animated,
   StatusBar,
 } from 'react-native';
-import { AuthStackParamList } from '../navigation/types';
+import { AuthStackParamList } from '../types/index';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
