@@ -1,26 +1,60 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { HomeStackParamList, MainTabParamList } from './types';
+import type { HomeStackParamList, MainTabParamList } from '../types/index';
 import HomeScreen from '../screens/HomeScreen';
 import UploadScreen from '../screens/UploadScreen';
-import VitalsScreen from '../screens/VitalsScreen';
 import TimelineScreen from '../screens/TimelineScreen';
 import ReportDetailScreen from '../screens/ReportDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../theme/theme';
+import AddVitalsScreen from '../screens/AddVitalsScreen';
+import VitalAnalysisScreen from '../screens/VitalAnalysisScreen';
+import VitalsTab from '../screens/VitalsScreen';
+import AddFamilyMemberScreen from '../screens/AddFamilyMemberScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const Stack = createNativeStackNavigator<HomeStackParamList>();
 
-function HomeStack() {
+// ✅ Home Stack (Reports ke liye)
+const HomeStack = createNativeStackNavigator();
+function HomeStackScreen() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="ReportDetail" component={ReportDetailScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
-    </Stack.Navigator>
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={HomeScreen} />
+      <HomeStack.Screen name="ReportDetail" component={ReportDetailScreen} />
+    </HomeStack.Navigator>
+  );
+}
+
+// ✅ Vitals Stack (Vitals ke liye)
+const VitalsStack = createNativeStackNavigator();
+function VitalsStackScreen() {
+  return (
+    <VitalsStack.Navigator screenOptions={{ headerShown: false }}>
+      <VitalsStack.Screen name="VitalsList" component={VitalsTab} />
+      <VitalsStack.Screen name="AddVitals" component={AddVitalsScreen} />
+      <VitalsStack.Screen
+        name="VitalAnalysis"
+        component={VitalAnalysisScreen}
+      />
+    </VitalsStack.Navigator>
+  );
+}
+
+const ProfileStack = createNativeStackNavigator();
+
+function ProfileStackScreen() {
+  return (
+    <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+      <ProfileStack.Screen
+        name="AddFamilyMember"
+        component={AddFamilyMemberScreen}
+      />
+      <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
+    </ProfileStack.Navigator>
   );
 }
 
@@ -50,7 +84,7 @@ export default function MainStack() {
     >
       <Tab.Screen
         name="HomeTab"
-        component={HomeStack}
+        component={HomeStackScreen}
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size, focused }) => (
@@ -80,7 +114,7 @@ export default function MainStack() {
 
       <Tab.Screen
         name="Vitals"
-        component={VitalsScreen}
+        component={VitalsStackScreen}
         options={{
           title: 'Vitals',
           tabBarIcon: ({ color, size }) => (
@@ -97,6 +131,20 @@ export default function MainStack() {
           tabBarIcon: ({ color, size, focused }) => (
             <Icon
               name={focused ? 'history' : 'history'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileStackScreen}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon
+              name={focused ? 'account' : 'account-outline'}
               size={size}
               color={color}
             />

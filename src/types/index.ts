@@ -167,6 +167,19 @@ export interface Vitals {
   updatedAt: string;
 }
 
+export interface VitalsContextType {
+  vitals: Vitals[];
+  currentVital: Vitals | null;
+  loading: boolean;
+  error: string | null;
+  total: number;
+  addVitals: (vitalsData: any) => Promise<Vitals>;
+  getVitals: (params?: any) => Promise<void>;
+  getVitalById: (id: string) => Promise<Vitals>;
+  deleteVital: (id: string) => Promise<void>;
+  clearError: () => void;
+}
+
 // ============ Helper function to convert isProcessed to status ============
 export function getReportStatus(report: Report): 'Analyzed' | 'Pending' {
   return report.isProcessed ? 'Analyzed' : 'Pending';

@@ -1,39 +1,7 @@
 // src/context/VitalsContext.tsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import api from '../api/api';
-
-interface Vitals {
-  _id: string;
-  userId: string;
-  familyMemberId: string;
-  bloodPressure?: { systolic: number; diastolic: number };
-  bloodSugar?: { value: number; type: string };
-  weight?: { value: number; unit: string };
-  height?: { value: number; unit: string };
-  heartRate?: { value: number };
-  temperature?: { value: number; unit: string };
-  oxygenLevel?: { value: number };
-  notes?: string;
-  recordedAt: string;
-}
-
-interface VitalsResponse {
-  vitals: Vitals[];
-  total: number;
-}
-
-interface VitalsContextType {
-  vitals: Vitals[];
-  currentVital: Vitals | null;
-  loading: boolean;
-  error: string | null;
-  total: number;
-  addVitals: (vitalsData: any) => Promise<Vitals>;
-  getVitals: (params?: any) => Promise<void>;
-  getVitalById: (id: string) => Promise<Vitals>;
-  deleteVital: (id: string) => Promise<void>;
-  clearError: () => void;
-}
+import type { Vitals, VitalsResponse, VitalsContextType } from '../types/index';
 
 const VitalsContext = createContext<VitalsContextType | undefined>(undefined);
 
